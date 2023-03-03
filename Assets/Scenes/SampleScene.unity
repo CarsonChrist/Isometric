@@ -1494,10 +1494,9 @@ MonoBehaviour:
   speed: 20
   maxDistance: 7
   dashTimer: 1
-  dashTime: 0.05
+  dashTime: 0.15
   attackSpeed: 5
   reloadTime: 0.5
-  dashPoints: 20
   maxDashes: 2
   maxAmmo: 10
 --- !u!54 &1615859153

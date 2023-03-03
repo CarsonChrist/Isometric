@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
     public float dashTime;
     public float attackSpeed;
     public float reloadTime;
-    public int dashPoints;
     public int maxDashes;
     public int maxAmmo;
 
@@ -28,6 +27,7 @@ public class PlayerController : MonoBehaviour
     float lastShot;
     int ammo;
     int dashes;
+    bool dashInput = false;
     bool reloading = false;
     bool movementEnabled = true;
     bool shootingEnabled = true;
@@ -52,8 +52,7 @@ public class PlayerController : MonoBehaviour
         // Dash button press
         if (Input.GetKeyDown("space") && dashes > 0 && dashingEnabled)
         {
-            Dash();
-            dashes--;
+            dashInput = true;
         }
 
         // Reload on shoot button press if out of ammo
@@ -109,9 +108,17 @@ public class PlayerController : MonoBehaviour
         playerLookAt.z += velocity.z;
 
         // Move rigidbody     
-        //rb.MovePosition(transform.position + (velocity) * Time.fixedDeltaTime);
         if (movementEnabled)
+        {
             rb.velocity = (velocity);
+        }
+        
+        if (dashInput)
+        {
+            Dash();
+            dashes--;
+            dashInput = false;
+        }
 
         // Dash cooldown
         if (dashes < maxDashes)
@@ -123,11 +130,11 @@ public class PlayerController : MonoBehaviour
                 dashes = maxDashes;
             }
         }
+
     }
     // Translate mouse position on screen to a Vector3 in the scene
     Vector3 MouseToWorld()
     {
-        // This was from unity forums
         // https://answers.unity.com/questions/1426353/best-way-of-accurately-getting-mouse-position-in-w.html
         Plane plane = new Plane(Vector3.up, transform.position);
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -146,37 +153,39 @@ public class PlayerController : MonoBehaviour
     {
         Instantiate(bullet, new Vector3(gameObject.transform.position.x, gameObject.transform.position.y + 0.75f, gameObject.transform.position.z), Quaternion.LookRotation(targetPos - transform.position));
     }
-    // raycast a path of points to dash through then execute them in a coroutine
+    // Raycast a path of points to dash through then execute them in a coroutine
     void Dash()
     {
 
-        // set dashPos to maxDistance
+        // Set dashPos to maxDistance
         dashPos = Vector3.MoveTowards(transform.position, playerLookAt, maxDistance);
 
-        // if dash hits a wall, dash to collision with wall instead as to not go past
+        // If dash hits a wall, dash to collision with wall instead as to not go past
         if (Physics.Raycast(transform.position, (dashPos - transform.position), out RaycastHit boundaryHit, Vector3.Distance(dashPos, transform.position), 1 << LayerMask.NameToLayer("Boundary")))
         {
             dashPos = boundaryHit.point;
         }
 
-        StartCoroutine(dashLerp(dashPoints));
+        StartCoroutine(dashLerp(dashTime));
 
     }
     // Move player across given dash points
-    IEnumerator dashLerp(int dashPoints)
+    IEnumerator dashLerp(float dashTime)
     {
-
+        // https://answers.unity.com/questions/1501234/smooth-forward-movement-with-a-coroutine.html
         Vector3 tempDashPos = dashPos;
         Vector3 midPos;
+        float elapsedTime = 0;
 
-        for (int i = 0; i < dashPoints; i++)
+        while (elapsedTime < dashTime)
         {
             midPos = rb.position;
-            yield return new WaitForSecondsRealtime(dashTime / dashPoints);
-            midPos = Vector3.MoveTowards(midPos, tempDashPos, Vector3.Distance(tempDashPos, midPos) / (dashPoints - i));
+            midPos = Vector3.Lerp(transform.position, dashPos, (elapsedTime/dashTime));
             rb.MovePosition(midPos);
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
-
+    
     }
     // Reload ammo and update screen text while disabling movement
     IEnumerator reload(float reloadTime)
@@ -193,7 +202,6 @@ public class PlayerController : MonoBehaviour
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "Reloading...";
         yield return new WaitForSeconds(reloadTime / 3f);
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "";
-
 
         ammo = maxAmmo;
         ammoDisplay.GetComponent<UnityEngine.UI.Text>().text = ammo + "/" + maxAmmo;
