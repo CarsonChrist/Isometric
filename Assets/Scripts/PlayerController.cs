@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
 
     public GameObject ammoDisplay;
     public GameObject reloadDisplay;
+    public GameObject reloadDisplayBg;
     public GameObject bullet;
     public float speed;
     public float maxDistance;
@@ -77,7 +78,7 @@ public class PlayerController : MonoBehaviour
             rb.velocity = Vector3.zero;
             if (ammo > 0)
             {
-                if (lastShot >= Time.deltaTime + (1 / attackSpeed))
+                if (lastShot >= Time.deltaTime + (1 / attackSpeed) && PauseMenu.isPaused == false)
                 {
                     Shoot();
                     ammo--;
@@ -195,12 +196,14 @@ public class PlayerController : MonoBehaviour
         shootingEnabled = false;
         dashingEnabled = false;
 
+        reloadDisplayBg.GetComponent<UnityEngine.UI.Image>().color = new Color(0,0,0,120);
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "Reloading.";
         yield return new WaitForSeconds(reloadTime / 3f);
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "Reloading..";
         yield return new WaitForSeconds(reloadTime / 3f);
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "Reloading...";
         yield return new WaitForSeconds(reloadTime / 3f);
+        reloadDisplayBg.GetComponent<UnityEngine.UI.Image>().color = new Color(0,0,0,0);
         reloadDisplay.GetComponent<UnityEngine.UI.Text>().text = "";
 
         ammo = maxAmmo;
